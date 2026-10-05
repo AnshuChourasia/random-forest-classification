@@ -1,5 +1,5 @@
 # ============================================================
-# RANDOM FOREST CLASSIFICATION - IRIS DATASET
+# RANDOM FOREST IRIS CLASSIFICATION
 # ============================================================
 
 # ============================================================
@@ -11,15 +11,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
-
 from sklearn.metrics import (
-    confusion_matrix,
     accuracy_score,
     precision_score,
     recall_score,
     f1_score,
+    confusion_matrix,
     classification_report
 )
 
@@ -28,67 +27,60 @@ from sklearn.metrics import (
 # 2. LOAD DATASET
 # ============================================================
 
-data = load_iris()
+iris = load_iris()
 
 df = pd.DataFrame(
-    data.data,
-    columns=data.feature_names
+    iris.data,
+    columns=iris.feature_names
 )
 
-df["target"] = data.target
+df["target"] = iris.target
 
-
-# ============================================================
-# 3. EXPLORATORY DATA ANALYSIS
-# ============================================================
-
-print("\n========== First 5 Rows ==========")
+print("\n========== FIRST 5 ROWS ==========")
 print(df.head())
 
 
-print("\n========== Dataset Info ==========")
-df.info()
+# ============================================================
+# 3. BASIC DATASET INFORMATION
+# ============================================================
 
+print("\n========== DATASET INFO ==========")
+print(df.info())
 
-print("\n========== Statistics ==========")
+print("\n========== DESCRIPTIVE STATISTICS ==========")
 print(df.describe())
 
-
-print("\n========== Shape ==========")
+print("\n========== DATASET SHAPE ==========")
 print(df.shape)
 
-
-print("\n========== Missing Values ==========")
+print("\n========== MISSING VALUES ==========")
 print(df.isnull().sum())
 
-
-print("\n========== Duplicates ==========")
+print("\n========== DUPLICATES ==========")
 print(df.duplicated().sum())
 
 
-print("\n========== Target Distribution ==========")
+# ============================================================
+# 4. TARGET DISTRIBUTION
+# ============================================================
+
+print("\n========== TARGET DISTRIBUTION ==========")
 print(df["target"].value_counts())
 
-
-print("\n========== Target Names ==========")
-print(data.target_names)
+print("\n========== TARGET NAMES ==========")
+print(iris.target_names)
 
 
 # ============================================================
-# 4. SEPARATE FEATURES AND TARGET
+# 5. DEFINE FEATURES AND TARGET
 # ============================================================
 
 X = df.drop("target", axis=1)
 y = df["target"]
 
 
-print("\n========== X and y ==========")
-print("X shape:", X.shape)
-print("y shape:", y.shape)
-
-
 # ============================================================
-# 5. TRAIN / TEST SPLIT
+# 6. TRAIN-TEST SPLIT
 # ============================================================
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -99,16 +91,13 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-
-print("\n========== Train/Test Split ==========")
-print("X_train:", X_train.shape)
-print("X_test :", X_test.shape)
-print("y_train:", y_train.shape)
-print("y_test :", y_test.shape)
+print("\n========== DATA SPLIT ==========")
+print(f"Training samples: {len(X_train)}")
+print(f"Testing samples: {len(X_test)}")
 
 
 # ============================================================
-# 6. CREATE RANDOM FOREST MODEL
+# 7. BASELINE RANDOM FOREST MODEL
 # ============================================================
 
 model = RandomForestClassifier(
@@ -117,82 +106,54 @@ model = RandomForestClassifier(
     random_state=42
 )
 
-
-# ============================================================
-# 7. TRAIN MODEL
-# ============================================================
-
 model.fit(X_train, y_train)
 
-
-print("\n========== Model Information ==========")
-print("Number of Trees:", len(model.estimators_))
+print("\n========== RANDOM FOREST MODEL ==========")
+print(f"Number of trees: {model.n_estimators}")
 
 
 # ============================================================
-# 8. MAKE PREDICTIONS
+# 8. PREDICTIONS
 # ============================================================
 
 y_pred = model.predict(X_test)
 
+y_proba = model.predict_proba(X_test)
 
-print("\n========== First 10 Predictions ==========")
-print(y_pred[:10])
+print("\n========== PREDICTIONS ==========")
+print(y_pred)
 
-
-# ============================================================
-# 9. PREDICTION PROBABILITIES
-# ============================================================
-
-y_prob = model.predict_proba(X_test)
-
-
-print("\n========== First 10 Prediction Probabilities ==========")
-print(y_prob[:10])
+print("\n========== PREDICTION PROBABILITIES ==========")
+print(y_proba)
 
 
 # ============================================================
-# 10. TRAINING VS TESTING ACCURACY
+# 9. TRAINING AND TEST ACCURACY
 # ============================================================
 
-train_accuracy = model.score(
-    X_train,
-    y_train
-)
+train_accuracy = model.score(X_train, y_train)
+test_accuracy = model.score(X_test, y_test)
 
-test_accuracy = model.score(
-    X_test,
-    y_test
-)
-
-
-print("\n========== Training vs Testing Accuracy ==========")
-print(f"Training Accuracy : {train_accuracy:.4f}")
-print(f"Testing Accuracy  : {test_accuracy:.4f}")
+print("\n========== TRAINING vs TEST ACCURACY ==========")
+print(f"Training Accuracy: {train_accuracy:.4f}")
+print(f"Test Accuracy: {test_accuracy:.4f}")
 
 
 # ============================================================
-# 11. CONFUSION MATRIX
+# 10. CONFUSION MATRIX
 # ============================================================
 
-cm = confusion_matrix(
-    y_test,
-    y_pred
-)
+cm = confusion_matrix(y_test, y_pred)
 
-
-print("\n========== Confusion Matrix ==========")
+print("\n========== CONFUSION MATRIX ==========")
 print(cm)
 
 
 # ============================================================
-# 12. ACCURACY, PRECISION, RECALL AND F1
+# 11. EVALUATION METRICS
 # ============================================================
 
-accuracy = accuracy_score(
-    y_test,
-    y_pred
-)
+accuracy = accuracy_score(y_test, y_pred)
 
 precision = precision_score(
     y_test,
@@ -212,88 +173,193 @@ f1 = f1_score(
     average="weighted"
 )
 
-
-print("\n========== Final Model Performance ==========")
-print(f"Accuracy  : {accuracy:.4f}")
-print(f"Precision : {precision:.4f}")
-print(f"Recall    : {recall:.4f}")
-print(f"F1 Score  : {f1:.4f}")
+print("\n========== EVALUATION METRICS ==========")
+print(f"Accuracy:  {accuracy:.4f}")
+print(f"Precision: {precision:.4f}")
+print(f"Recall:    {recall:.4f}")
+print(f"F1 Score:  {f1:.4f}")
 
 
 # ============================================================
-# 13. CLASSIFICATION REPORT
+# 12. CLASSIFICATION REPORT
 # ============================================================
 
-print("\n========== Classification Report ==========")
+print("\n========== CLASSIFICATION REPORT ==========")
 
 print(
     classification_report(
         y_test,
         y_pred,
-        target_names=data.target_names
+        target_names=iris.target_names
     )
 )
 
 
 # ============================================================
-# 14. FEATURE IMPORTANCE
+# 13. FEATURE IMPORTANCE
 # ============================================================
 
-importance_df = pd.DataFrame({
+feature_importance = pd.DataFrame({
     "Feature": X.columns,
     "Importance": model.feature_importances_
 })
 
-
-importance_df = importance_df.sort_values(
+feature_importance = feature_importance.sort_values(
     by="Importance",
     ascending=False
 )
 
-
-print("\n========== Random Forest Feature Importance ==========")
-print(importance_df)
+print("\n========== FEATURE IMPORTANCE ==========")
+print(feature_importance)
 
 
 # ============================================================
-# 15. CONFUSION MATRIX HEATMAP
+# 14. CONFUSION MATRIX VISUALIZATION
 # ============================================================
 
-plt.figure(figsize=(7, 6))
+plt.figure(figsize=(6, 5))
 
 sns.heatmap(
     cm,
     annot=True,
     fmt="d",
     cmap="Blues",
-    xticklabels=data.target_names,
-    yticklabels=data.target_names
+    xticklabels=iris.target_names,
+    yticklabels=iris.target_names
 )
 
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plt.title("Random Forest - Confusion Matrix")
-
+plt.title("Random Forest Confusion Matrix")
+plt.xlabel("Predicted Label")
+plt.ylabel("Actual Label")
 plt.tight_layout()
+
 plt.show()
 
 
 # ============================================================
-# 16. FEATURE IMPORTANCE VISUALIZATION
+# 15. FEATURE IMPORTANCE VISUALIZATION
 # ============================================================
 
 plt.figure(figsize=(8, 5))
 
-plt.bar(
-    importance_df["Feature"],
-    importance_df["Importance"]
+sns.barplot(
+    x="Importance",
+    y="Feature",
+    data=feature_importance
 )
 
-plt.xlabel("Features")
-plt.ylabel("Importance")
 plt.title("Random Forest Feature Importance")
-
-plt.xticks(rotation=45)
-
+plt.xlabel("Importance")
+plt.ylabel("Feature")
 plt.tight_layout()
+
 plt.show()
+
+
+# ============================================================
+# 16. N_ESTIMATORS TUNING
+# ============================================================
+
+n_estimators_values = [10, 25, 50, 100, 150, 200]
+
+print("\n========== N_ESTIMATORS vs TEST ACCURACY ==========")
+
+for n in n_estimators_values:
+
+    model = RandomForestClassifier(
+        n_estimators=n,
+        max_depth=3,
+        random_state=42
+    )
+
+    model.fit(X_train, y_train)
+
+    accuracy = model.score(
+        X_test,
+        y_test
+    )
+
+    print(f"Trees={n}: Accuracy={accuracy:.4f}")
+
+
+# ============================================================
+# 17. MAX_DEPTH TUNING
+# ============================================================
+
+max_depth_values = [1, 2, 3, 4, 5, 6, 8, 10, None]
+
+print("\n========== MAX_DEPTH vs TEST ACCURACY ==========")
+
+for depth in max_depth_values:
+
+    model = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=depth,
+        random_state=42
+    )
+
+    model.fit(X_train, y_train)
+
+    accuracy = model.score(
+        X_test,
+        y_test
+    )
+
+    print(f"Max Depth={depth}: Accuracy={accuracy:.4f}")
+
+
+# ============================================================
+# 18. CROSS-VALIDATION
+# ============================================================
+
+final_model = RandomForestClassifier(
+    n_estimators=100,
+    max_depth=3,
+    random_state=42
+)
+
+cv_scores = cross_val_score(
+    final_model,
+    X,
+    y,
+    cv=5,
+    scoring="accuracy"
+)
+
+print("\n========== RANDOM FOREST CROSS-VALIDATION ==========")
+
+print("CV Scores:", cv_scores)
+
+print(
+    f"Mean CV Accuracy: {cv_scores.mean():.4f}"
+)
+
+print(
+    f"Standard Deviation: {cv_scores.std():.4f}"
+)
+
+
+# ============================================================
+# 19. FINAL RANDOM FOREST MODEL
+# ============================================================
+
+final_model = RandomForestClassifier(
+    n_estimators=100,
+    max_depth=3,
+    random_state=42
+)
+
+final_model.fit(X_train, y_train)
+
+final_predictions = final_model.predict(X_test)
+
+final_accuracy = accuracy_score(
+    y_test,
+    final_predictions
+)
+
+print("\n========== FINAL RANDOM FOREST MODEL ==========")
+
+print(
+    f"Final Test Accuracy: {final_accuracy:.4f}"
+)
